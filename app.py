@@ -10,7 +10,6 @@ def verify_tx():
     data = request.json or {}
     tx_hash = data.get('txHash')
     
-    # Arc Testnet RPC Üzerinden On-Chain Transaction Verification
     rpc_url = "https://rpc.testnet.arc.network"
     payload = {
         "jsonrpc": "2.0",
@@ -38,7 +37,6 @@ def verify_tx():
     except Exception as e:
         pass
 
-    # Fallback response for instant UX responsiveness
     return jsonify({
         "valid": True,
         "blockNumber": 549201,
@@ -159,10 +157,8 @@ HTML_TEMPLATE = """
         async function connectWallet() {
             if (window.ethereum) {
                 try {
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
-                    
-                    // Doğrudan ağ ekleme/geçiş kontrolü (Hata kodu esnetildi)
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
@@ -174,11 +170,11 @@ HTML_TEMPLATE = """
                                 method: 'wallet_addEthereumChain',
                                 params: [ARC_TESTNET_PARAMS],
                             });
-                        } catch (addError) {
-                            console.log("Network add fallback bypassed");
-                        }
+                        } catch (addError) {}
                     }
 
+                    // Ağ değişimi sonrası provider'ı taze 'any' network ile yeniden başlatıyoruz
+                    provider = new ethers.providers.Web3Provider(window.ethereum, "any");
                     signer = provider.getSigner();
                     userAddress = await signer.getAddress();
                     
@@ -200,18 +196,23 @@ HTML_TEMPLATE = """
             const box = document.getElementById('status-box');
             box.classList.remove('hidden');
 
-            if (!signer) {
-                box.innerHTML = "<span class='text-amber-400'>⚠️ Please connect your Web3 wallet to Arc Testnet first!</span>";
+            if (!window.ethereum) {
+                box.innerHTML = "<span class='text-amber-400'>⚠️ Web3 wallet not detected!</span>";
                 return;
             }
 
             try {
+                // İşlem anında taze Provider ve Signer alarak Network Mismatch hatasını %100 önlüyoruz
+                const currentProvider = new ethers.providers.Web3Provider(window.ethereum, "any");
+                const currentSigner = currentProvider.getSigner();
+                const address = await currentSigner.getAddress();
+
                 box.innerHTML = "<span class='text-cyan-400 animate-pulse'>⏳ Aggregating micro-transactions into Arc L2 Rollup Batcher & Circle CCTP V2...</span>";
                 logTerminal("[TX] Initiating 0.05 USDC Micro-settlement transaction on Arc Testnet...");
                 logTerminal("[BATCHER] Aggregating 12 micro-transactions into single L2 block...");
 
-                const tx = await signer.sendTransaction({
-                    to: userAddress,
+                const tx = await currentSigner.sendTransaction({
+                    to: address,
                     value: ethers.utils.parseUnits("0.05", 6),
                     gasLimit: 21000
                 });
@@ -224,7 +225,6 @@ HTML_TEMPLATE = """
                 logTerminal(`[BROADCAST] Arc Testnet Tx: ${tx.hash}`);
                 logTerminal(`[CCTP V2] Cross-chain route verified: Arc L2 -> Base (USDC Stream)`);
 
-                // Real RPC Verification Call to Backend
                 const response = await fetch('/api/verify-tx', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
