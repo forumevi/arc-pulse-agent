@@ -126,7 +126,7 @@ HTML_TEMPLATE = """
             <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
                 <div>
                     <h2 class="text-md font-semibold text-white border-b border-slate-800 pb-3">Live Agent Telemetry</h2>
-                    <div id="terminal-logs" class="mt-4 font-mono text-[11px] space-y-2 text-slate-400 max-h-64 overflow-y-auto">
+                    <div id="terminal-logs" class="mt-4 font-mono text-[11px] space-y-2 text-slate-400 max-h-64 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         <p class="text-cyan-400">[SYSTEM] Agent initialized on Arc Testnet RPC.</p>
                         <p>[INFO] Circle CLI stack status: v0.0.6 (Up to date)</p>
                         <p>[WAIT] Awaiting wallet signature connection...</p>
