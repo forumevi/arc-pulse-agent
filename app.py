@@ -159,24 +159,26 @@ HTML_TEMPLATE = """
         async function connectWallet() {
             if (window.ethereum) {
                 try {
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    
+                    // Doğrudan ağ ekleme/geçiş kontrolü (Hata kodu esnetildi)
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
                             params: [{ chainId: ARC_TESTNET_PARAMS.chainId }],
                         });
-                    } catch (switchError) {
-                        if (switchError.code === 4902) {
+                    } catch (err) {
+                        try {
                             await window.ethereum.request({
                                 method: 'wallet_addEthereumChain',
                                 params: [ARC_TESTNET_PARAMS],
                             });
-                        } else {
-                            throw switchError;
+                        } catch (addError) {
+                            console.log("Network add fallback bypassed");
                         }
                     }
 
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
                     signer = provider.getSigner();
                     userAddress = await signer.getAddress();
                     
