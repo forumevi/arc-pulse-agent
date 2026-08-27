@@ -107,7 +107,6 @@ HTML_TEMPLATE = """
         async function connectWallet() {
             if (window.ethereum) {
                 try {
-                    // Switch to Arc Testnet or prompt user to add it
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
@@ -133,7 +132,7 @@ HTML_TEMPLATE = """
                     document.getElementById('network-badge').innerText = "● Arc Testnet";
                     document.getElementById('network-badge').className = "px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-mono";
                     
-                    logTerminal(`Wallet Connected to Arc Testnet: ${userAddress}`);
+                    logTerminal(`Wallet Connected: ${userAddress}`);
                 } catch (err) {
                     logTerminal(`[ERROR] Wallet Connection Failed: ${err.message}`);
                 }
@@ -155,10 +154,11 @@ HTML_TEMPLATE = """
                 box.innerHTML = "<span class='text-cyan-400 animate-pulse'>⏳ Prompting Arc Testnet transaction signature for Circle Micro-settlement...</span>";
                 logTerminal("[TX] Initiating 0.05 USDC Micro-settlement transaction on Arc Testnet...");
 
-                // Triggers REAL Arc Testnet Call (Zero Real Funds Cost)
+                // Valid target address + explicit gas limit to prevent RPC estimation error
                 const tx = await signer.sendTransaction({
-                    to: "0x0000000000000000000000000000000000000000",
-                    value: ethers.utils.parseUnits("0.0001", 6) // Native USDC decimal scaling for Arc
+                    to: userAddress, // Self-transfer pattern or Treasury Vault address (prevents zero-address revert)
+                    value: ethers.utils.parseUnits("0.05", 6), // 0.05 USDC on Arc
+                    gasLimit: 21000 // Explicit standard EVM transfer gas limit
                 });
 
                 box.innerHTML = `<span class='text-emerald-400'>✅ On-Chain Transaction Sent on Arc Testnet!</span><br><span class='text-slate-400'>Tx Hash: <a href="https://testnet.arcscan.app/tx/${tx.hash}" target="_blank" class="underline text-cyan-400">${tx.hash}</a></span><br>⏳ Verifying Circle Agent Stack proof...`;
