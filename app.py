@@ -39,7 +39,7 @@ HTML_TEMPLATE = """
             </div>
             <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 backdrop-blur">
                 <p class="text-xs text-slate-400 uppercase tracking-wider">Target Chain</p>
-                <p class="text-xl font-bold text-cyan-400 mt-1">Arc Ecosystem</p>
+                <p class="text-xl font-bold text-cyan-400 mt-1">Arc Testnet</p>
             </div>
             <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 backdrop-blur">
                 <p class="text-xs text-slate-400 uppercase tracking-wider">Micro-Fee Rate</p>
@@ -58,17 +58,18 @@ HTML_TEMPLATE = """
             <div class="lg:col-span-2 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-5">
                 <div class="border-b border-slate-800 pb-3">
                     <h2 class="text-lg font-semibold text-white">Execute Agent-to-Agent Micro-Settlement</h2>
-                    <p class="text-xs text-slate-400">Trigger on-chain Web3 transaction request to unlock autonomous yield data.</p>
+                    <p class="text-xs text-slate-400">Trigger Arc Testnet Web3 transaction request to unlock autonomous yield data.</p>
                 </div>
 
                 <div class="p-4 bg-slate-950 rounded-xl border border-slate-800/80 space-y-3 font-mono text-xs">
+                    <div class="flex justify-between"><span class="text-slate-500">Target Network:</span> <span class="text-amber-400">Arc Testnet (Chain ID: 5042002)</span></div>
                     <div class="flex justify-between"><span class="text-slate-500">Target Agent:</span> <span class="text-slate-300">0x71C...49A2 (Arc Treasury Bot)</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500">Asset Requested:</span> <span class="text-cyan-400">USDC (Arc Native)</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Asset Requested:</span> <span class="text-cyan-400">USDC (Arc Native Gas)</span></div>
                     <div class="flex justify-between"><span class="text-slate-500">Settlement Cost:</span> <span class="text-emerald-400">0.05 USDC</span></div>
                 </div>
 
                 <button onclick="executePayment()" class="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold rounded-xl transition shadow-lg text-sm tracking-wide">
-                    Sign & Pay 0.05 USDC (Web3 Prompt)
+                    Sign & Pay 0.05 USDC (Arc Testnet)
                 </button>
 
                 <!-- Dynamic Output Screen -->
@@ -80,7 +81,7 @@ HTML_TEMPLATE = """
                 <div>
                     <h2 class="text-md font-semibold text-white border-b border-slate-800 pb-3">Live Agent Telemetry</h2>
                     <div id="terminal-logs" class="mt-4 font-mono text-[11px] space-y-2 text-slate-400 max-h-60 overflow-y-auto">
-                        <p class="text-cyan-400">[SYSTEM] Agent initialized on Arc RPC.</p>
+                        <p class="text-cyan-400">[SYSTEM] Agent initialized on Arc Testnet RPC.</p>
                         <p>[INFO] Circle CLI stack status: v0.0.6 (Up to date)</p>
                         <p>[WAIT] Awaiting wallet signature connection...</p>
                     </div>
@@ -94,24 +95,50 @@ HTML_TEMPLATE = """
     <script>
         let provider, signer, userAddress;
 
+        // Arc Testnet Configuration (Circle L1)
+        const ARC_TESTNET_PARAMS = {
+            chainId: "0x4cef52", // 5042002 Decimal
+            chainName: "Arc Testnet",
+            nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 6 },
+            rpcUrls: ["https://rpc.testnet.arc.network"],
+            blockExplorerUrls: ["https://testnet.arcscan.app"]
+        };
+
         async function connectWallet() {
             if (window.ethereum) {
                 try {
+                    // Switch to Arc Testnet or prompt user to add it
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: ARC_TESTNET_PARAMS.chainId }],
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [ARC_TESTNET_PARAMS],
+                            });
+                        } else {
+                            throw switchError;
+                        }
+                    }
+
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     await provider.send("eth_requestAccounts", []);
                     signer = provider.getSigner();
                     userAddress = await signer.getAddress();
                     
                     document.getElementById('connect-btn').innerText = userAddress.substring(0,6) + "..." + userAddress.substring(38);
-                    document.getElementById('network-badge').innerText = "● Connected";
+                    document.getElementById('network-badge').innerText = "● Arc Testnet";
                     document.getElementById('network-badge').className = "px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-mono";
                     
-                    logTerminal(`Wallet Connected: ${userAddress}`);
+                    logTerminal(`Wallet Connected to Arc Testnet: ${userAddress}`);
                 } catch (err) {
                     logTerminal(`[ERROR] Wallet Connection Failed: ${err.message}`);
                 }
             } else {
-                alert("Please install MetaMask or Web3 Wallet to interact with ArcPulse.");
+                alert("Please install MetaMask!");
             }
         }
 
@@ -120,22 +147,22 @@ HTML_TEMPLATE = """
             box.classList.remove('hidden');
 
             if (!signer) {
-                box.innerHTML = "<span class='text-amber-400'>⚠️ Please connect your Web3 wallet first!</span>";
+                box.innerHTML = "<span class='text-amber-400'>⚠️ Please connect your Web3 wallet to Arc Testnet first!</span>";
                 return;
             }
 
             try {
-                box.innerHTML = "<span class='text-cyan-400 animate-pulse'>⏳ Prompting MetaMask on-chain signature for Circle Micro-settlement...</span>";
-                logTerminal("[TX] Initiating 0.05 USDC Micro-settlement transaction...");
+                box.innerHTML = "<span class='text-cyan-400 animate-pulse'>⏳ Prompting Arc Testnet transaction signature for Circle Micro-settlement...</span>";
+                logTerminal("[TX] Initiating 0.05 USDC Micro-settlement transaction on Arc Testnet...");
 
-                // Triggers REAL Web3 Transaction Prompt
+                // Triggers REAL Arc Testnet Call (Zero Real Funds Cost)
                 const tx = await signer.sendTransaction({
-                    to: "0x0000000000000000000000000000000000000000", // Burn / Demo Treasury Target
-                    value: ethers.utils.parseEther("0.0001") // Real Native Network Call
+                    to: "0x0000000000000000000000000000000000000000",
+                    value: ethers.utils.parseUnits("0.0001", 6) // Native USDC decimal scaling for Arc
                 });
 
-                box.innerHTML = `<span class='text-emerald-400'>✅ On-Chain Transaction Sent!</span><br><span class='text-slate-400'>Tx Hash: ${tx.hash}</span><br>⏳ Verifying Circle Agent Stack proof...`;
-                logTerminal(`[SUCCESS] Tx Hash: ${tx.hash}`);
+                box.innerHTML = `<span class='text-emerald-400'>✅ On-Chain Transaction Sent on Arc Testnet!</span><br><span class='text-slate-400'>Tx Hash: <a href="https://testnet.arcscan.app/tx/${tx.hash}" target="_blank" class="underline text-cyan-400">${tx.hash}</a></span><br>⏳ Verifying Circle Agent Stack proof...`;
+                logTerminal(`[SUCCESS] Arc Testnet Tx: ${tx.hash}`);
 
                 setTimeout(() => {
                     box.innerHTML += `<br><br><span class='text-cyan-300'>📊 [UNLOCKED ARC ALPHA METRICS]:</span><br>• Arc Chain Yield: +16.4% APY<br>• Optimal Route: Circle Liquidity Pool #09<br>• Settlement Latency: 118ms`;
