@@ -1,22 +1,12 @@
-# ArcPulse // Autonomous Agent & Treasury Intelligence ⚡💳
+# ArcPulse // Live Autonomous Agent & Web3 Settlement Stack ⚡💳
 
-ArcPulse is an interactive dashboard and micro-service prototype demonstrating **Agent-to-Agent USDC micropayments** on the **Arc Ecosystem**, integrated with **Circle Agent Stack** architecture patterns.
+ArcPulse is an interactive dApp demonstrating **Agent-to-Agent USDC micropayments** on the **Arc Ecosystem**, integrated with **Circle Agent Stack** architecture patterns and real-time Web3 wallet prompts.
+
+🌐 **Live Interactive App:** https://arc-pulse-agent.vercel.app
 
 ![ArcPulse Dashboard](dashboard.png)
 
-## Key Architecture Features
-
-* **Real-time Agent Metrics:** Visualizes live treasury volume, active Arc agent instances, and micropayment latency.
-* **Circle USDC Paywall Integration:** Simulates instant on-chain settlement routing before unlocking premium ecosystem yield analytics.
-* **Developer Friendly:** Designed to plug directly into CLI workflows (`circle update` & Claude Code agent skills).
-
-## Tech Stack
-* **Backend:** Python / Flask
-* **Frontend:** TailwindCSS, Chart.js
-* **Settlement Engine:** Circle Agent Stack Pattern (USDC)
-
-## Quickstart
-
-```bash
-pip install flask requests python-dotenv
-python app.py
+## Architecture Highlights
+* **Web3 Provider Integration:** Native Web3 (MetaMask / EVM) wallet authentication.
+* **On-Chain Settlement Flow:** Executes real-time Web3 signatures for Circle USDC agent paywalls.
+* **Agent Telemetry Stream:** Live terminal logs streaming agent heartbeat and latency metrics.
